@@ -28,6 +28,23 @@ import handler
 
 class TestHandler:
     @patch("handler.Db")
+    def test_update_item(self, mock_db, update_correct_item_event):
+        mock_db.return_value = MockDb()
+        event, context = update_correct_item_event
+
+        response = handler.update_item(event, context)
+        itemReceived = json.loads(response["body"])
+
+        body = {
+            "success": itemReceived["success"],
+            "text": itemReceived["text"],
+        }
+        assert body == {"success": True, "text": "New Hello"}
+        headers = response["headers"]
+        assert headers["Content-Type"] == "application/vnd.api+json"
+        assert response["statusCode"] == HTTPStatus.OK
+
+    @patch("handler.Db")
     def test_get_item_success(self, mock_db, get_correct_item_event):
         event, context = get_correct_item_event
 

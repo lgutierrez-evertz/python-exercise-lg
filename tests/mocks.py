@@ -10,6 +10,12 @@ class MockDb(Db):
         super().__init__()
 
     @staticmethod
+    def update_item(item_type: ItemType, tenant_id: str, item_id: str, item_data: Mapping[str, Any] = None):
+        MockDb.get_item(item_type, tenant_id, item_id)
+
+        return item_data
+
+    @staticmethod
     def get_item(item_type: ItemType, tenant_id: str, item_id: str, fields=None) -> dict[str, Any]:
         if (
             ItemKeys.get_keys(item_type=ItemType.ITEM, tenant_id=TENANT_ID, item_id=ITEM_ID).primary

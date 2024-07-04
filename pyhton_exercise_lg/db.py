@@ -77,6 +77,45 @@ class Db:
     """
 
     @staticmethod
+    @start_span("database_update_item")
+    def update_item(item_type: ItemType, tenant_id: str, item_id: str, item_data: Mapping[str, Any] = None):
+        """
+        Update item information in database
+        :param item_type: One of the types from ItemType
+        :param tenant_id: item tenant
+        :param item_id: item id
+        :param item_data: data to update item with
+        """
+        logger.info(f"Updating item [{item_id}] for tenant [{tenant_id}]")
+        keys: ItemKeys = ItemKeys.get_keys(item_type, tenant_id, item_id)
+        # key = {PK_KEY: keys.primary, ITEM_ID_ATTRIBUTE: item_id}
+
+        # if item_data:
+        # kwargs = {
+        #     "Key": {PK_KEY: keys.primary},
+        #     "UpdateExpression": "set #data.success=:s, #data.#text=:t",
+        #     "ExpressionAttributeValues": {":s": item_data["success"], ":t": item_data["text"]},
+        #     "ExpressionAttributeNames": {"#data": DATA_ATTRIBUTE, "#text": "text"},
+        #     "ReturnValues": "UPDATED_NEW",
+        # }
+        try:
+            return restricted_table(TABLE_NAME, tenant_id).update_item(
+                Key={PK_KEY: keys.primary},
+                UpdateExpression="SET #data.success=:s, #data.#text=:t",
+                ExpressionAttributeValues={":s": item_data["success"], ":t": item_data["text"]},
+                ExpressionAttributeNames={"#data": DATA_ATTRIBUTE, "#text": "text"},
+                ReturnValues="ALL_NEW",
+            )["Attributes"][DATA_ATTRIBUTE]
+        except ClientError as client_error:
+            error = client_error.response.get("Error", {})
+            error_code = error.get("Code", "")
+            logger.error(f"Error Code: [{error_code}]")
+
+            if error_code == "ConditionalCheckFailedException":
+                raise ItemConflict(item_type.value, tenant_id, item_id) from client_error
+            raise
+
+    @staticmethod
     @start_span("database_put_item")
     def put_item(item_type: ItemType, tenant_id: str, item_id: str, item_data: Mapping[str, Any] = None):
         """

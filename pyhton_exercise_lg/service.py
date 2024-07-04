@@ -30,6 +30,38 @@ class Service:
         logger.info(f"Getting item: {item_id}")
         return self.database.get_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
 
+    @start_span("service_update_item")
+    def update_item(self, item_data: dict) -> dict:
+        """
+        Update item with new data
+
+        :param item_id: The id of the item to be updated
+
+        :return: Dict
+        """
+        item_id = item_data["id"]
+        logger.info(f"Updating Item: ${item_id}")
+        item = self.database.update_item(
+            item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item_data
+        )
+        # item = self.database.get_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
+
+        return item
+        # now = datetime.datetime.utcnow().isoformat()
+        # item["modification_info"] = {"last_modified_at": now, "last_modified_by": self.user_id}
+
+        # try:
+        #     # self.database.put_item(
+        #     #     item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id, item_data=item
+        #     # )
+        #     return self.database.get_item(item_type=ItemType.ITEM, tenant_id=self.tenant_id, item_id=item_id)
+
+        # except Exception as error:
+        #     print(error)
+        #     # tests errors here
+        #     raise error
+        # return item
+
     @start_span("service_create_item")
     def create_item(self, item: dict) -> dict:
         """

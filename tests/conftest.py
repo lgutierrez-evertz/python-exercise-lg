@@ -1,4 +1,5 @@
 import datetime
+import json
 import uuid
 
 import pytest
@@ -121,6 +122,17 @@ def api_gateway_event():
         return event, Context()
 
     return _api_gateway_event
+
+
+@pytest.fixture()
+def update_correct_item_event(jwts, api_gateway_event):
+    path_params = ItemIdPathParam(item_id=ITEM_ID)
+    item = Item(success=True, text="New Hello")
+    event, context = api_gateway_event(
+        path=f"/update_item/{ITEM_ID}", method="PUT", path_params=path_params.dict(), body=item.json()
+    )
+    event["headers"]["Authorization"] = jwts["IdToken"]
+    yield event, context
 
 
 @pytest.fixture()
